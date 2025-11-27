@@ -118,22 +118,21 @@ function AuthModalComponent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
+      console.log("Form validation failed:", errors);
       return;
     }
 
     setIsSubmitting(true);
-
     setTimeout(() => {
-      const submitData = mode === "login" 
+      const submitData = mode === "login"
         ? { email: formData.email, password: formData.password }
         : { name: formData.name, email: formData.email, password: formData.password };
-      
+
       console.log("Данные формы:", submitData);
-      
-      alert("Форма отправлена, но база данных не подключена — данные не сохранены.");
-      
+      alert("Форма отправлена!");
+
       setIsSubmitting(false);
       handleClose();
     }, 500);
@@ -153,8 +152,55 @@ function AuthModalComponent() {
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Очищаем ошибку для этого поля при вводе
     if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  const handleBlur = (field: string) => {
+    // При потере фокуса валидируем поле
+    validateField(field);
+  };
+
+  const validateField = (field: string) => {
+    let error = "";
+    const value = formData[field as keyof typeof formData];
+    
+    switch (field) {
+      case "name":
+        if (mode === "register" && !value.trim()) {
+          error = "Имя обязательно для заполнения";
+        }
+        break;
+      case "email":
+        if (!value.trim()) {
+          error = "Email обязателен для заполнения";
+        } else if (!validateEmail(value)) {
+          error = "Введите корректный email";
+        }
+        break;
+      case "password":
+        if (!value) {
+          error = "Пароль обязателен для заполнения";
+        } else if (value.length < 6) {
+          error = "Пароль должен содержать минимум 6 символов";
+        }
+        break;
+      case "confirmPassword":
+        if (mode === "register") {
+          if (!value) {
+            error = "Подтвердите пароль";
+          } else if (value !== formData.password) {
+            error = "Пароли не совпадают";
+          }
+        }
+        break;
+    }
+    
+    if (error) {
+      setErrors(prev => ({ ...prev, [field]: error }));
     }
   };
 
@@ -278,87 +324,108 @@ function AuthModalComponent() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      Имя
-                      <Input
-                        type="text"
-                        placeholder="Введите ваше имя"
-                        value={formData.name}
-                        onValueChange={(value) => handleInputChange("name", value)}
-                        isInvalid={!!errors.name}
-                        errorMessage={errors.name}
-                        variant="bordered"
-                        size="lg"
-                        radius="lg"
-                        classNames={{
-                          base: "mb-2",
-                          input: "text-gray-900 dark:text-gray-100 text-[15px]",
-                          label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
-                          inputWrapper: "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-all duration-200 shadow-sm",
-                          errorMessage: "text-xs mt-1.5",
-                        }}
-                        startContent={
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                          </svg>
-                        }
-                      />
+                      <div className="mb-2">
+                        Имя
+                        <Input
+                          type="text"
+                          
+                          placeholder="Введите ваше имя"
+                          value={formData.name}
+                          onValueChange={(value) => handleInputChange("name", value)}
+                          onBlur={() => handleBlur("name")}
+                          isInvalid={!!errors.name}
+                          variant="bordered"
+                          size="lg"
+                          radius="lg"
+                          classNames={{
+                            input: "text-gray-900 dark:text-gray-100 text-[15px]",
+                            label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
+                            inputWrapper: `border-2 ${errors.name ? "border-red-500" : "border-gray-200 dark:border-gray-700"} bg-white dark:bg-gray-800/50 data-[hover=true]:border-blue-400 data-[focus=true]:border-blue-500 transition-all duration-200 shadow-sm`,
+                          }}
+                        />
+                        {/* Кастомное сообщение об ошибке */}
+                        {errors.name && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-1 mt-1.5"
+                          >
+                            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs text-red-500 dark:text-red-400">{errors.name}</span>
+                          </motion.div>
+                        )}
+                      </div>
                     </motion.div>
                   )}
 
-                  <div>
+                  <div className="mb-2">
                     Email
                     <Input
                       type="email"
-                     
+                
                       placeholder="example@mail.com"
                       value={formData.email}
                       onValueChange={(value) => handleInputChange("email", value)}
+                      onBlur={() => handleBlur("email")}
                       isInvalid={!!errors.email}
-                      errorMessage={errors.email}
                       variant="bordered"
                       size="lg"
                       radius="lg"
                       classNames={{
-                        base: "mb-2",
                         input: "text-gray-900 dark:text-gray-100 text-[15px]",
                         label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
-                        inputWrapper: "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-all duration-200 shadow-sm",
-                        errorMessage: "text-xs mt-1.5",
+                        inputWrapper: `border-2 ${errors.email ? "border-red-500" : "border-gray-200 dark:border-gray-700"} bg-white dark:bg-gray-800/50 data-[hover=true]:border-blue-400 data-[focus=true]:border-blue-500 transition-all duration-200 shadow-sm`,
                       }}
-                      startContent={
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                        </svg>
-                      }
                     />
+                    {/* Кастомное сообщение об ошибке */}
+                    {errors.email && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-1 mt-1.5"
+                      >
+                        <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs text-red-500 dark:text-red-400">{errors.email}</span>
+                      </motion.div>
+                    )}
                   </div>
 
-                  <div>
+                  <div className="mb-2">
                     Пароль
                     <Input
                       type="password"
-          
+                      
                       placeholder="Минимум 6 символов"
                       value={formData.password}
                       onValueChange={(value) => handleInputChange("password", value)}
+                      onBlur={() => handleBlur("password")}
                       isInvalid={!!errors.password}
-                      errorMessage={errors.password}
                       variant="bordered"
                       size="lg"
                       radius="lg"
                       classNames={{
-                        base: "mb-2",
                         input: "text-gray-900 dark:text-gray-100 text-[15px]",
                         label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
-                        inputWrapper: "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-all duration-200 shadow-sm",
-                        errorMessage: "text-xs mt-1.5",
+                        inputWrapper: `border-2 ${errors.password ? "border-red-500" : "border-gray-200 dark:border-gray-700"} bg-white dark:bg-gray-800/50 data-[hover=true]:border-blue-400 data-[focus=true]:border-blue-500 transition-all duration-200 shadow-sm`,
                       }}
-                      startContent={
-                        <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                        </svg>
-                      }
                     />
+                    {/* Кастомное сообщение об ошибке */}
+                    {errors.password && (
+                      <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="flex items-center gap-1 mt-1.5"
+                      >
+                        <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                        </svg>
+                        <span className="text-xs text-red-500 dark:text-red-400">{errors.password}</span>
+                      </motion.div>
+                    )}
                   </div>
 
                   {mode === "register" && (
@@ -368,31 +435,39 @@ function AuthModalComponent() {
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                     >
-                      Подтвердите пароль
-                      <Input
-                        type="password"
+                      <div className="mb-2">
+                        Подтвердите пароль
+                        <Input
+                          type="password"
                       
-                        placeholder="Повторите пароль"
-                        value={formData.confirmPassword}
-                        onValueChange={(value) => handleInputChange("confirmPassword", value)}
-                        isInvalid={!!errors.confirmPassword}
-                        errorMessage={errors.confirmPassword}
-                        variant="bordered"
-                        size="lg"
-                        radius="lg"
-                        classNames={{
-                          base: "mb-2",
-                          input: "text-gray-900 dark:text-gray-100 text-[15px]",
-                          label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
-                          inputWrapper: "border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800/50 hover:border-blue-400 dark:hover:border-blue-500 focus-within:border-blue-500 dark:focus-within:border-blue-400 transition-all duration-200 shadow-sm",
-                          errorMessage: "text-xs mt-1.5",
-                        }}
-                        startContent={
-                          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                        }
-                      />
+                          placeholder="Повторите пароль"
+                          value={formData.confirmPassword}
+                          onValueChange={(value) => handleInputChange("confirmPassword", value)}
+                          onBlur={() => handleBlur("confirmPassword")}
+                          isInvalid={!!errors.confirmPassword}
+                          variant="bordered"
+                          size="lg"
+                          radius="lg"
+                          classNames={{
+                            input: "text-gray-900 dark:text-gray-100 text-[15px]",
+                            label: "text-gray-700 dark:text-gray-300 font-medium text-sm mb-1.5",
+                            inputWrapper: `border-2 ${errors.confirmPassword ? "border-red-500" : "border-gray-200 dark:border-gray-700"} bg-white dark:bg-gray-800/50 data-[hover=true]:border-blue-400 data-[focus=true]:border-blue-500 transition-all duration-200 shadow-sm`,
+                          }}
+                        />
+                        {/* Кастомное сообщение об ошибке */}
+                        {errors.confirmPassword && (
+                          <motion.div
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-center gap-1 mt-1.5"
+                          >
+                            <svg className="w-4 h-4 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs text-red-500 dark:text-red-400">{errors.confirmPassword}</span>
+                          </motion.div>
+                        )}
+                      </div>
                     </motion.div>
                   )}
 
