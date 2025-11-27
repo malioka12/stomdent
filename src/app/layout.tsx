@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Header from "@/components/UI/header";
 import { Providers } from "@/providers";
+import { AuthModalProvider } from "@/components/UI/modals/AuthModal";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,7 +17,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "StomDent - Стоматологическая клиника",
-  description: "Профессиональная стоматология: лечение, протезирование, имплантация и отбеливание зубов. Современное оборудование, опытные врачи, гарантия качества",
+  description: "Профессиональная стоматология",
 };
 
 export default function RootLayout({
@@ -26,14 +27,14 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-         <Providers>
-          <Header />
-          <main className="container mx-auto p-4">
-            {children}
-          </main>
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <Providers>
+          <AuthModalProvider>
+            <Header />
+            <main className="container mx-auto p-4">
+              {children}
+            </main>
+          </AuthModalProvider>
         </Providers>
       </body>
     </html>

@@ -12,6 +12,7 @@ import {
   Link,
   Button,
 } from "@heroui/react";
+import { useAuthModal } from "./modals/AuthModal";
 
 export const StomDentLogo = () => {
   return (
@@ -24,77 +25,66 @@ export const StomDentLogo = () => {
   );
 };
 
-// Красивая иконка меню (бургер)
 const MenuIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-700">
     <path d="M3 12H21M3 6H21M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
-// Красивая иконка закрытия (крестик)
 const CloseIcon = () => (
   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-700">
     <path d="M18 6L6 18M6 6l12 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
   </svg>
 );
 
-// Иконки для стоматологии
 const DentalIcons = {
   home: "🏠",
   about: "👨‍⚕️",
   services: "🦷",
   contacts: "📞",
-  login: "📅"
+  login: "📅",
 };
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = React.useState(false);
+  const { openModal } = useAuthModal();
 
-  // Блокировка скролла при открытом меню
   React.useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'unset';
-    }
-    
+    document.body.style.overflow = isMenuOpen ? "hidden" : "unset";
     return () => {
-      document.body.style.overflow = 'unset';
+      document.body.style.overflow = "unset";
     };
   }, [isMenuOpen]);
 
   const closeMenu = () => {
     setIsMenuOpen(false);
-    document.body.style.overflow = 'unset';
+    document.body.style.overflow = "unset";
   };
 
   const menuItems = [
     { name: "Главная", href: "/", icon: DentalIcons.home },
     { name: "О клинике", href: "/about", icon: DentalIcons.about },
-    { name: "Контакты", href: "/contacts", icon: DentalIcons.contacts }
+    { name: "Контакты", href: "/contacts", icon: DentalIcons.contacts },
   ];
 
   return (
-    <Navbar 
-      isBordered 
+    <Navbar
+      isBordered
       isMenuOpen={isMenuOpen}
       onMenuOpenChange={setIsMenuOpen}
       className="bg-white/95 backdrop-blur-md shadow-sm sticky top-0 z-50 py-3"
       shouldHideOnScroll={false}
       maxWidth="2xl"
     >
-      {/* Мобильное меню - кастомный бургер с иконками */}
       <NavbarContent className="sm:hidden" justify="start">
         <button
           onClick={() => setIsMenuOpen(!isMenuOpen)}
           className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors ml-2"
-          aria-label={isMenuOpen ? "Закрыть меню" : "Открыть меню"}
         >
           {isMenuOpen ? <CloseIcon /> : <MenuIcon />}
         </button>
       </NavbarContent>
 
-      {/* Логотип для мобильных */}
       <NavbarContent className="sm:hidden" justify="center">
         <NavbarBrand className="max-w-[140px] mr-4">
           <StomDentLogo />
@@ -102,7 +92,6 @@ export default function Header() {
         </NavbarBrand>
       </NavbarContent>
 
-      {/* Десктопное меню */}
       <NavbarContent className="hidden sm:flex" justify="start">
         <NavbarBrand className="lg:mr-12 md:mr-6 ml-4">
           <StomDentLogo />
@@ -110,13 +99,12 @@ export default function Header() {
         </NavbarBrand>
       </NavbarContent>
 
-      {/* Центральная навигация для ПК */}
       <NavbarContent className="hidden sm:flex lg:gap-8 md:gap-4" justify="center">
         {menuItems.map((item) => (
           <NavbarItem key={item.name}>
-            <Link 
-              color="foreground" 
-              href={item.href} 
+            <Link
+              color="foreground"
+              href={item.href}
               className="text-gray-700 hover:text-cyan-600 transition-colors duration-200 font-medium lg:text-base md:text-sm py-2 lg:px-3 md:px-2 rounded-lg hover:bg-cyan-50"
             >
               {item.name}
@@ -125,30 +113,23 @@ export default function Header() {
         ))}
       </NavbarContent>
 
-      {/* Правая часть - кнопка записи (скрыта на мобильных) */}
-      <NavbarContent className="hidden sm:flex" justify="end">
-        <NavbarItem>
+      <NavbarContent justify="end">
+        <NavbarItem className="hidden lg:flex">
           <Button 
-            as={Link} 
-            color="primary" 
-            href="/appointment" 
-            variant="solid" 
-            className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white shadow-lg hover:shadow-xl transition-all duration-300 lg:text-sm md:text-xs lg:px-6 md:px-4 lg:py-2.5 md:py-2 h-auto rounded-xl font-semibold hover:scale-105 transform mr-4"
-            size="md"
+            onPress={() => openModal("login")} 
+             className="bg-blue-200 hover:bg-blue-800 hover:text-blue-200 text-blue-800 font-medium"
           >
-            Записаться
+            Войти
           </Button>
         </NavbarItem>
+        
       </NavbarContent>
 
-      {/* Мобильное выпадающее меню */}
       <NavbarMenu className="bg-white/95 backdrop-blur-md fixed top-0 left-0 w-full h-screen z-50 pt-16 px-4">
-        {/* Кнопка закрытия вверху меню */}
         <div className="absolute top-4 left-4">
           <button
             onClick={closeMenu}
             className="p-1.5 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Закрыть меню"
           >
             <CloseIcon />
           </button>
@@ -157,9 +138,9 @@ export default function Header() {
         <div className="flex flex-col h-full">
           <div className="flex-1">
             {menuItems.map((item) => (
-              <NavbarMenuItem key={item.name} className="border-b border-gray-100 last:border-b-0">
+              <NavbarMenuItem key={item.name} className="border-b border-gray-100">
                 <Link
-                  className="w-full py-4 text-gray-700 hover:text-cyan-600 transition-colors duration-200 text-base font-medium flex items-center gap-3 hover:bg-cyan-50 rounded-lg px-3"
+                  className="w-full py-4 text-gray-700 hover:text-cyan-600 text-base font-medium flex items-center gap-3 hover:bg-cyan-50 rounded-lg px-3"
                   href={item.href}
                   onPress={closeMenu}
                 >
@@ -169,20 +150,21 @@ export default function Header() {
               </NavbarMenuItem>
             ))}
           </div>
+
+          <div className="pb-8 pt-4">
+            <div className="flex flex-col gap-3">
+              <Button 
+                onPress={() => {
+                  openModal("login");
+                  closeMenu();
+                }} 
+                className="bg-blue-200 hover:bg-blue-800 hover:text-blue-200 text-blue-800 font-medium"
+                fullWidth
+              >
+                Войти
+              </Button>
           
-          {/* Кнопка записи в мобильном меню */}
-          <div className="pb-6 pt-4 border-t border-gray-200 px-2">
-            <Button 
-              as={Link} 
-              color="primary" 
-              href="/appointment" 
-              variant="solid" 
-              className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white w-full py-3 text-base font-semibold rounded-xl shadow-lg transition-all duration-300"
-              onPress={closeMenu}
-              size="sm"
-            >
-              {DentalIcons.login} Записаться
-            </Button>
+            </div>
           </div>
         </div>
       </NavbarMenu>
